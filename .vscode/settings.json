@@ -11,7 +11,7 @@
         "**/README.md": true,
         "**/a.out": true,
         "serial_port/__pycache__": true,
-        "**/.vscode": true
+        "**/.vscode": false
     },
     "explorerExclude.backup": null
 }
