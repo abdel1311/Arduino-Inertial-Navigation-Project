@@ -11,10 +11,10 @@ void produit_matrice_vecteur(float matrice[3][3], float vecteur[3], float vecteu
 float norme_vecteur(float vecteur[3]);
 
 //calcule le produit scalaire de 2 vecteurs
-void produit_scalaire(float vecteura[3], float vecteurb[3], float vecteur_sortie[3]);
+float produit_scalaire(float vecteura[3], float vecteurb[3]);
 
 //calcule le produit vectoriel de 2 vecteurs
 void produit_vectoriel(float vecteura[3], float vecteurb[3], float vecteur_sortie[3]);
 
 // calcule l'exponentielle d'une matrice (développement de tailor à l'ordre 2) 
-void exponentiel_matrice(float matrice_a[3][3], float delta_t, float matrice_solution[3][3]);
+void exponentiel_matrice(float matrice_A[3][3], float delta_t, float matrice_solution1[3][3], float matrice_solution2[3][3])

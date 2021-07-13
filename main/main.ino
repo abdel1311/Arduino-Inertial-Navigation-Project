@@ -3,24 +3,15 @@
 #include "calcul.h"
 #include "util.h"
 
-float temps_init;
+float temps_init = 0;
 float prev_temps_acc = 0, prev_temps_rot = 0, prev_temps_mag = 0;
-float prev_acc_x = 0, prev_acc_y = 0, prev_acc_z = 0;
-
-float vit_ang_x = 0, vit_ang_y = 0, vit_ang_z = 0;
-float vit_x = 0, vit_y = 0, vit_z = 0;
-
+float prev_rot_x = 0, prev_rot_y = 0, prev_rot_z = 0;
+float prev_acc[3];
+float vit[3] = {0.0, 0.0, 0.0};
 float prev_R[3][3] = {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}};
+int c = 0;
 
-//convertir e nrad/seconde
-
-
-
-
-vecteur r = {1.1, 2.2, 3.3};
-
-
-
+//convertir en rad/seconde   
 
 void setup()
 {
@@ -30,7 +21,6 @@ void setup()
     ;
   Serial.println("Started ");
 
-  temps_init = millis() / 1000.0;
 
   //Begin and Test IMU
   if (!IMU.begin())
@@ -39,120 +29,137 @@ void setup()
     while (1)
       ;
   }
+  delay(3000);
+  temps_init = millis() / 1000.0;
 }
 
+//-------------------------------------------------Calcul
+
+//ortogonaliser puis normaliser
 void corriger_matrice_rotation(float matrice_rotation[3][3])
 {
   transpose_matrice(matrice_rotation);
 
-  //calcul des normes des vecteurs
   float norme_vect_1 = norme_vecteur(matrice_rotation[0]);
+  for (int i = 0; i < 3; i++) matrice_rotation[0][i] /= norme_vect_1;                             // normalisation vecteur 1  
+ 
+  float scalaire_1_2 = produit_scalaire(matrice_rotation[0], matrice_rotation[1]);
+  for (int i = 0; i < 3; i++) matrice_rotation[1][i] -= matrice_rotation[0][i] * scalaire_1_2;    // orthogonalisation vecteur 2 
   float norme_vect_2 = norme_vecteur(matrice_rotation[1]);
-
-  Serial.print("norme vecteur 1 : ");
-  Serial.println(norme_vect_1);
-
-  Serial.print("norme vecteur 2 : ");
-  Serial.println(norme_vect_2);
-
-  //orthogonalization des vecteurs 1 et 2
-  float unit_vect_1[3] = {matrice_rotation[0][0] / norme_vect_1, matrice_rotation[0][1] / norme_vect_1, matrice_rotation[0][2] / norme_vect_1};
-  float vecteur2_[3] = {matrice_rotation[1][0], matrice_rotation[1][1], matrice_rotation[1][2]};
-
-  Serial.print("norme unit vect 1 : ");
-  Serial.println(norme_vecteur(unit_vect_1));
-  //Serial.println(norme_vecteur(unit_vect_2));
-
-  Serial.println("--------");
-  Serial.println(matrice_rotation[0][0]);
-  Serial.println("--------");
-
-  /*   for(int i = 0; i < 3; i++){
-    Serial.println(unit_vect_1[i]);
-    Serial.println(unit_vect_2[i]);
-  } */
-
-  /*
-  //re-remplissage de la matrice_rotation de départ
-  float matrice_rotation_sortie[3][3] = {{unit_vect_1[0], unit_vect_1[1], unit_vect_1[2]},
-                                         {unit_vect_2[0] - unit_vect_1[0], unit_vect_2[1] - unit_vect_1[1], unit_vect_2[2] - unit_vect_1[2]},
-                                         {unit_vect_2[0] * unit_vect_1[0], unit_vect_2[1] * unit_vect_1[1], unit_vect_2[2] * unit_vect_1[2]} };
-  */
-
-  float scalaire_1_2[3];
-  produit_scalaire(unit_vect_1, vecteur2_, scalaire_1_2);
-
-  matrice_rotation[0][0] = unit_vect_1[0];
-  matrice_rotation[0][1] = unit_vect_1[1];
-  matrice_rotation[0][2] = unit_vect_1[2];
-
-  matrice_rotation[1][0] = vecteur2_[0] - unit_vect_1[0] * scalaire_1_2[0];
-  matrice_rotation[1][1] = vecteur2_[1] - unit_vect_1[1] * scalaire_1_2[1];
-  matrice_rotation[1][2] = vecteur2_[2] - unit_vect_1[2] * scalaire_1_2[2];
-
-  for (int i = 0; i < 2; i++)
-  {
-    matrice_rotation[1][i] /= norme_vecteur(vecteur2_);
-  }
-
+  for (int i = 0; i < 3; i++)  matrice_rotation[1][i] /= norme_vect_2;                            // normalisation vecteur 2 
+  
   float vectoriel_1_2[3];
   produit_vectoriel(matrice_rotation[0], matrice_rotation[1], vectoriel_1_2);
-
-  matrice_rotation[2][0] = vectoriel_1_2[0];
-  matrice_rotation[2][1] = vectoriel_1_2[1];
-  matrice_rotation[2][2] = vectoriel_1_2[2];
-
-  /*   float matrice_rotation_sortie[3][3] = {{unit_vect_1[0], unit_vect_1[1], unit_vect_1[2]},
-                                         {unit_vect_2[0] - unit_vect_1[0] * scalaire_1_2[0],
-                                          unit_vect_2[1] - unit_vect_1[1] * scalaire_1_2[1],
-                                          unit_vect_2[2] - unit_vect_1[2] * scalaire_1_2[2]},
-                                         {vectoriel_1_2[0], vectoriel_1_2[1], vectoriel_1_2[2]}}; */
-
+  for (int i = 0; i < 3; i++) matrice_rotation[2][i] = vectoriel_1_2[i];                          // orthogonalisation et normalisation vecteur 3
+  
   transpose_matrice(matrice_rotation);
 }
 
-
-
 void loop()
 {
-  float acc_x, acc_y, acc_z, mag_x, mag_y, mag_z;
+  float vecteur_acceration_body[3]={0.0, 0.0, 0.0};
+  float mag_x, mag_y, mag_z;
   float temps_acc, temps_rot, temps_mag;
-  float omega[3][3];
-  float exp_omega[3][3];
-  float R[3][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+  float omega[3][3],exp_omega[3][3],exp_omega3[3][3], R[3][3];
 
-  preleve_donnees(&temps_acc, &temps_rot, &temps_mag, &acc_x, &acc_y, &acc_z, &mag_x, &mag_y, &mag_z, omega, temps_init);
-  corrige_donnees(&acc_x, &acc_y, &acc_z);
 
-  // Calcul matrice de rotation
-  exponentiel_matrice(omega, temps_rot - prev_temps_rot, exp_omega);
-  //print_matrice(omega);
-  //print_matrice(exp_omega);
+  preleve_donnees(&temps_acc, &temps_rot, &temps_mag, vecteur_acceration_body, &mag_x, &mag_y, &mag_z, omega, temps_init);
+  corrige_donnees(vecteur_acceration_body);
 
+  for (int i = 0; i < 3; i++){
+    //Serial.print(vecteur_acceration_body[i]); Serial.println(",");
+  }
+ Serial.println();
+
+  // Calcul et correction de la matrice de rotation
+  exponentiel_matrice(omega, temps_rot - prev_temps_rot, exp_omega,exp_omega3);
   produit_matrice_matrice(prev_R, exp_omega, R);
 
-  Serial.println("Matrice rotation");
-  print_matrice(R);
 
-  Serial.println("Matrice corrigée");
-  corriger_matrice_rotation(R);
-
-  print_matrice(R);
-  //print_matrice(exp_omega);
-  //Serial.println('1');
-
-  float vecteur_acceration_body[3] = {acc_x, acc_y, acc_z};
-  Serial.println(acc_z);
-  float vecteur_acceration_globale[3];
-
-  produit_matrice_vecteur(R, vecteur_acceration_body, vecteur_acceration_globale);
-  vecteur_acceration_globale[2] -= 9.81;
-
-  Serial.println("Vecteur accéleration global: ");
-  for (int i = 0; i <= 2; i++)
-  {
-    Serial.println(vecteur_acceration_globale[i]);
+  if (c<10){
+    //print_matrice(R);
+    //print_matrice(exp_omega);
+    c++;
   }
 
+  //Serial.println("-------------------------------------------");
+  float vecteur_acceration_globale_no_corec[3];
+  //transpose_matrice(R);
+  //print_matrice(R);
+
+  produit_matrice_vecteur(R, vecteur_acceration_body, vecteur_acceration_globale_no_corec);
+
+  for (int i = 0; i < 3; i++){
+    //Serial.print(vecteur_acceration_globale_no_corec[i]); Serial.println(",");
+  }
+  //Serial.println();
+  
+  //transpose_matrice(R);  
+  //print_matrice(R);
+
+
+  //corriger_matrice_rotation(R);
+  //print_matrice(R);
+
+  float vecteur_acceration_globale[3];
+  produit_matrice_vecteur(R, vecteur_acceration_body, vecteur_acceration_globale);
+
+
+  for (int i = 0; i < 3; i++){
+    //Serial.print(vecteur_acceration_globale[i]); Serial.println(",");
+  }
+  //Serial.println();
+  
+  //vecteur_acceration_globale[2] = fabs(vecteur_acceration_globale[2]) - 9.81; 
+  //vecteur_acceration_globale_no_corec[2] += 9.81;
+
+  
+  Serial.print(temps_acc);
+  Serial.print(",");
+  
+  for (int i = 0; i < 3; i++)
+  {
+    Serial.print(vecteur_acceration_body[i]); Serial.print(",");
+  }
+    for (int i = 0; i < 3; i++)
+  {
+    Serial.print(vecteur_acceration_globale[i]); Serial.print(",");
+  }
+  for (int i = 0; i < 3; i++)
+  {
+    Serial.print(vecteur_acceration_globale_no_corec[i]); Serial.print(",");
+  }
+    for (int i = 0; i < 3; i++)
+  {
+    Serial.print(R[i][0]); Serial.print(",");
+  }
+  for (int i = 0; i < 3; i++)
+  {
+    Serial.print(R[i][1]); Serial.print(",");
+  }
+    for (int i = 0; i < 3; i++)
+  {
+    Serial.print(R[i][2]); Serial.print(",");
+  }
+
+
+
+  
+  Serial.print(1.0);
+
+  
+  Serial.println();
+
+  //integre( temps_rot, omega[2][1] )
+  for (int i = 0; i < 3; i++){
+    //vit[i] += integre(prev_temps_acc, temps_acc, prev_acc[i], vecteur_acceration_globale[i]);
+    //Serial.print(vit[i]);
+    //Serial.print(",");
+  }
+
+  
+  //Serial.println();
+  
+  copie_matrice(R,prev_R);
   prev_temps_rot = temps_rot;
 }

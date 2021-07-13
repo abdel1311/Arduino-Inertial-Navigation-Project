@@ -15,11 +15,15 @@ float integre(float a, float b, float fa, float fb)
 // Calcule le produit de deux matrices A et B : A*B
 void produit_matrice_matrice(float matrice_A[3][3], float matrice_B[3][3], float matrice_solution[3][3])
 {
-  for (int i = 0; i <= 2; i++)
+
+  
+  for (int i = 0; i < 3; i++)
   {
-    for (int j = 0; j <= 2; j++)
+    for (int j = 0; j < 3; j++)
     {
-      for (int k = 0; k <= 2; k++)
+      matrice_solution[i][j] = 0.0;
+
+      for (int k = 0; k < 3; k++)
       {
         matrice_solution[i][j] += matrice_A[i][k] * matrice_B[k][j];
       }
@@ -32,7 +36,7 @@ void produit_matrice_vecteur(float matrice[3][3], float vecteur[3], float vecteu
 {
   for (int i = 0; i < 3; i++)
   {
-    float somme = 0;
+    float somme = 0.;
     for (int j = 0; j < 3; j++)
     {
       somme += matrice[i][j] * vecteur[j];
@@ -40,28 +44,66 @@ void produit_matrice_vecteur(float matrice[3][3], float vecteur[3], float vecteu
     vecteur_solution[i] = somme;
   }
 }
+
 // Calcule l'exponentielle d'une matrice (développement de tailor à l'ordre 2) 
-void exponentiel_matrice(float matrice_A[3][3], float delta_t, float matrice_solution[3][3])
+void exponentiel_matrice(float matrice_A[3][3], float delta_t, float matrice_solution1[3][3], float matrice_solution2[3][3])
 {
   float solution_temp[3][3];
+  float I[3][3] = {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}};
+  float M[3][3];
+  float M2[3][3];
+  float M3[3][3];
 
-  for (int i = 0; i <= 2; i++)
+
+
+  for (int i = 0; i < 3; i++)
   {
-    for (int j = 0; j <= 2; j++)
+    for (int j = 0; j < 3; j++)
     {
-      solution_temp[i][j] = delta_t * matrice_A[i][j];
-
-      if (i == j)
-        solution_temp[i][j] += 1;
-
-      for (int k = 0; k <= 2; k++)
-      {
-        solution_temp[i][j] += (delta_t * matrice_A[i][k] * delta_t * matrice_A[k][j]) / 2;
-      }
-
-      matrice_solution[i][j] = solution_temp[i][j];
+      M[i][j] = delta_t * matrice_A[i][j];
+       
     }
   }
+
+  produit_matrice_matrice( M, M, M2);
+
+  for (int i = 0; i < 3; i++)
+  {
+    for (int j = 0; j < 3; j++)
+    {
+      M2[i][j] /=2.;
+    }
+  }
+
+
+  produit_matrice_matrice( M2, M, M3);
+
+  for (int i = 0; i < 3; i++)
+  {
+    for (int j = 0; j < 3; j++)
+    {
+      M2[i][j] /=6.;
+    }
+  }
+
+
+  for (int i = 0; i < 3; i++)
+  {
+    for (int j = 0; j < 3; j++)
+    {
+      matrice_solution1[i][j] = I[i][j] + M[i][j] + M2[i][j];
+    }
+  }
+
+  for (int i = 0; i < 3; i++)
+  {
+    for (int j = 0; j < 3; j++)
+    {
+      matrice_solution2[i][j] = I[i][j]+M[i][j]+M2[i][j] + M3[i][j];
+    }
+  }
+
+  
 }
 
 //------------------------------------------------- CALCULE VECTORIEL -------------------------------------------------
@@ -73,12 +115,14 @@ float norme_vecteur(float vecteur[3])
 }
 
 //Calcule le produit scalaire de 2 vecteurs
-void produit_scalaire(float vecteurA[3], float vecteurB[3], float vecteur_sortie[3])
+float produit_scalaire(float vecteurA[3], float vecteurB[3])
 {
+  float res = 0;
   for (int i = 0; i < 3; i++)
   {
-    vecteur_sortie[i] = vecteurA[i] * vecteurB[i];
+    res+= vecteurA[i] * vecteurB[i];
   }
+  return res;
 }
 
 //Calcule le produit vectoriel de 2 vecteurs
@@ -88,5 +132,3 @@ void produit_vectoriel(float vecteurA[3], float vecteurB[3], float vecteur_sorti
   vecteur_sortie[1] = vecteurA[2] * vecteurB[0] - vecteurA[0] * vecteurB[2];
   vecteur_sortie[2] = vecteurA[0] * vecteurB[1] - vecteurA[1] * vecteurB[0];
 }
-
-
