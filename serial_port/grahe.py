@@ -5,17 +5,9 @@ path = 'data.dat'
 
 DATA = np.loadtxt(path,delimiter=',')
 X = DATA[:,0] # Temp
-acc_b_x = DATA[:,1] 
-acc_b_y = DATA[:,2] 
-acc_b_z = DATA[:,3] 
-
-acc_g_x_corec = DATA[:,4]
-acc_g_y_corec = DATA[:,5]
-acc_g_z_corec = DATA[:,6]
-
-acc_g_x = DATA[:,7] 
-acc_g_y = DATA[:,8]
-acc_g_z= DATA[:,9]
+acc_b_x , acc_b_z , acc_b_z = DATA[:,1], DATA[:,2], DATA[:,3] 
+acc_g_x_corec , acc_g_y_corec , acc_g_z_corec = DATA[:,4], DATA[:,5], DATA[:,6]
+acc_g_x , acc_g_y , acc_g_z = DATA[:,7], DATA[:,8], DATA[:,9]
 
 
 plt.figure(figsize=(15,8))
