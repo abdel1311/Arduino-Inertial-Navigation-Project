@@ -1,3 +1,5 @@
 .DS_Store
 *.txt
 *.csv
+*.vscode/
+*/Rot_x/graphe.py
